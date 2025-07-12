@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Margadarsi Debug</title>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+</head>
+<body>
+  <h1>Data Debugger</h1>
+  <div id="output"></div>
+
+  <script>
+    const SHEET_ID = '1YxtKYmBhNEQFUQrq_8bug9Zh_j0CjJ3LzfoCrNpUdhA';
+    const SHEET_NAME = 'Form Responses 1';
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
+
+    document.getElementById('output').innerHTML = `<p>Loading from: ${url}</p>`;
+    
+    fetch(url)
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.text();
+      })
+      .then(csv => {
+        document.getElementById('output').innerHTML += `<pre>${csv.substring(0, 500)}...</pre>`;
+        Papa.parse(csv, {
+          header: true,
+          complete: function(results) {
+            console.log("Parsed results:", results);
+            document.getElementById('output').innerHTML += 
+              `<h2>First 3 rows:</h2><pre>${JSON.stringify(results.data.slice(0, 3), null, 2)}</pre>`;
+          }
+        });
+      })
+      .catch(e => {
+        document.getElementById('output').innerHTML += 
+          `<p style="color:red">Error: ${e.message}</p>`;
+        console.error(e);
+      });
+  </script>
+</body>
+</html>
