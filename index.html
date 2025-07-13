@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mandal Analytics Hub | Futuristic Dashboard</title>
+    <title>Mandal Adoption Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
@@ -436,7 +436,7 @@
 
     <div class="dashboard-container">
         <div class="dashboard-header">
-            <h1>MANDAL ANALYTICS HUB</h1>
+            <h1>MANDAL ADOPTION ANALYTICS</h1>
             <div class="last-updated" id="last-updated">Last updated: Loading...</div>
         </div>
         
@@ -471,15 +471,6 @@
             </div>
             <div class="metric-card">
                 <div class="metric-label">
-                    <i class="fas fa-user-friends"></i> TOTAL MEMBERS
-                </div>
-                <div class="metric-value" id="total-members">0</div>
-                <div class="metric-change">
-                    <i class="fas fa-arrow-up"></i> 8% from last month
-                </div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-label">
                     <i class="fas fa-home"></i> TOTAL ADOPTED
                 </div>
                 <div class="metric-value" id="total-adopted">0</div>
@@ -489,20 +480,20 @@
             </div>
             <div class="metric-card">
                 <div class="metric-label">
-                    <i class="fas fa-hands-helping"></i> MARGADARSI MOBILIZED
+                    <i class="fas fa-percentage"></i> ADOPTION RATE
                 </div>
-                <div class="metric-value" id="total-margadarsi">0</div>
+                <div class="metric-value" id="adoption-rate">0%</div>
                 <div class="metric-change">
-                    <i class="fas fa-arrow-up"></i> 15% from last month
+                    <i class="fas fa-arrow-up"></i> 5% from last month
                 </div>
             </div>
             <div class="metric-card">
                 <div class="metric-label">
-                    <i class="fas fa-check-circle"></i> SECRETARIATS COVERED
+                    <i class="fas fa-star"></i> TOP PERFORMING MANDAL
                 </div>
-                <div class="metric-value" id="coverage-rate">0%</div>
+                <div class="metric-value" id="top-mandal">-</div>
                 <div class="metric-change">
-                    <i class="fas fa-arrow-up"></i> 5% from last month
+                    <i class="fas fa-trophy"></i> <span id="top-rate">0%</span>
                 </div>
             </div>
         </div>
@@ -512,16 +503,16 @@
             <div class="map-overlay">
                 <div class="map-legend">
                     <div class="legend-item">
-                        <div class="legend-color" style="background: var(--primary);"></div>
-                        <span>High Coverage (>75%)</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: var(--secondary);"></div>
-                        <span>Medium Coverage (50-75%)</span>
+                        <div class="legend-color" style="background: #10b981;"></div>
+                        <span>High Adoption (>75%)</span>
                     </div>
                     <div class="legend-item">
                         <div class="legend-color" style="background: #f59e0b;"></div>
-                        <span>Low Coverage (<50%)</span>
+                        <span>Medium Adoption (50-75%)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #ef4444;"></div>
+                        <span>Low Adoption (<50%)</span>
                     </div>
                 </div>
             </div>
@@ -529,28 +520,25 @@
         
         <div class="visualization-row">
             <div class="visualization-container">
-                <h3 class="chart-title">FAMILIES VS ADOPTED</h3>
-                <div id="pieChart" style="width: 100%; height: 100%;"></div>
+                <h3 class="chart-title">ADOPTION RATE BY MANDAL</h3>
+                <div id="barChart" style="width: 100%; height: 100%;"></div>
             </div>
             <div class="visualization-container">
-                <h3 class="chart-title">SECRETARIAT COVERAGE BY MANDAL</h3>
-                <div id="barChart" style="width: 100%; height: 100%;"></div>
+                <h3 class="chart-title">ADOPTION RATE DISTRIBUTION</h3>
+                <div id="pieChart" style="width: 100%; height: 100%;"></div>
             </div>
         </div>
         
         <div class="data-table-container">
-            <h3 style="color: var(--primary); margin-top: 0;"><i class="fas fa-table"></i> DETAILED MANDAL DATA</h3>
+            <h3 style="color: var(--primary); margin-top: 0;"><i class="fas fa-table"></i> ADOPTION DETAILS BY MANDAL</h3>
             <table id="data-table">
                 <thead>
                     <tr>
                         <th>Mandal</th>
                         <th>Families</th>
-                        <th>Members</th>
                         <th>Adopted</th>
-                        <th>Margadarsi</th>
-                        <th>Total Secretariats</th>
-                        <th>Covered</th>
-                        <th>Coverage</th>
+                        <th>Adoption Rate</th>
+                        <th>Performance</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
@@ -628,22 +616,15 @@
                     allData = results.data.map(row => {
                         // Clean and parse numeric values
                         const mandalName = row.MandalName || '';
-                        const totalFamilies = parseInt(row.TotalFamilies) || 0;
+                        const totalFamilies = parseInt(row.TotalFamilies) || 1; // Ensure at least 1 to avoid division by zero
                         const totalAdopted = parseInt(row.TotalAdopted) || 0;
-                        const coverageRate = (parseInt(row.TotalSecretariats) > 0) 
-                            ? Math.round((parseInt(row.CoveredSecretariats) / parseInt(row.TotalSecretariats)) * 100)
-                            : 0;
+                        const adoptionRate = Math.round((totalAdopted / totalFamilies) * 100);
                         
                         return {
                             MandalName: mandalName,
                             TotalFamilies: totalFamilies,
-                            TotalFamilyMembers: parseInt(row.TotalFamilyMembers) || 0,
                             TotalAdopted: totalAdopted,
-                            TotalMargadarsiMobilized: parseInt(row.TotalMargadarsiMobilized) || 0,
-                            TotalSecretariats: parseInt(row.TotalSecretariats) || 0,
-                            CoveredSecretariats: parseInt(row.CoveredSecretariats) || 0,
-                            CoverageRate: coverageRate,
-                            NotAdopted: totalFamilies - totalAdopted,
+                            AdoptionRate: adoptionRate,
                             // Extract constituency from mandal name if not in data
                             Constituency: row.Constituency || extractConstituency(mandalName),
                             // Get coordinates for mapping
@@ -721,47 +702,85 @@
         
         function updateMetrics() {
             const totalFamilies = filteredData.reduce((sum, item) => sum + item.TotalFamilies, 0);
-            const totalMembers = filteredData.reduce((sum, item) => sum + item.TotalFamilyMembers, 0);
             const totalAdopted = filteredData.reduce((sum, item) => sum + item.TotalAdopted, 0);
-            const totalMargadarsi = filteredData.reduce((sum, item) => sum + item.TotalMargadarsiMobilized, 0);
-            const totalSecretariats = filteredData.reduce((sum, item) => sum + item.TotalSecretariats, 0);
-            const totalCovered = filteredData.reduce((sum, item) => sum + item.CoveredSecretariats, 0);
-            const coverageRate = totalSecretariats > 0 ? Math.round((totalCovered / totalSecretariats) * 100) : 0;
+            const adoptionRate = totalFamilies > 0 ? Math.round((totalAdopted / totalFamilies) * 100) : 0;
+            
+            // Find top performing mandal
+            let topMandal = { MandalName: '-', AdoptionRate: 0 };
+            if (filteredData.length > 0) {
+                topMandal = filteredData.reduce((prev, current) => 
+                    (prev.AdoptionRate > current.AdoptionRate) ? prev : current
+                );
+            }
             
             document.getElementById('total-families').textContent = totalFamilies.toLocaleString();
-            document.getElementById('total-members').textContent = totalMembers.toLocaleString();
             document.getElementById('total-adopted').textContent = totalAdopted.toLocaleString();
-            document.getElementById('total-margadarsi').textContent = totalMargadarsi.toLocaleString();
-            document.getElementById('coverage-rate').textContent = `${coverageRate}%`;
+            document.getElementById('adoption-rate').textContent = `${adoptionRate}%`;
+            document.getElementById('top-mandal').textContent = topMandal.MandalName;
+            document.getElementById('top-rate').textContent = `${topMandal.AdoptionRate}%`;
         }
         
         function updateTable() {
             const tableBody = document.querySelector('#data-table tbody');
             tableBody.innerHTML = '';
             
-            filteredData.forEach(item => {
-                const coverageRate = item.CoverageRate;
+            // Sort by adoption rate (descending)
+            const sortedData = [...filteredData].sort((a, b) => b.AdoptionRate - a.AdoptionRate);
+            
+            sortedData.forEach(item => {
+                const performanceClass = 
+                    item.AdoptionRate > 75 ? 'high' : 
+                    item.AdoptionRate > 50 ? 'medium' : 'low';
+                
+                const performanceLabel = 
+                    item.AdoptionRate > 75 ? 'High' : 
+                    item.AdoptionRate > 50 ? 'Medium' : 'Low';
                 
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${item.MandalName}</td>
                     <td>${item.TotalFamilies.toLocaleString()}</td>
-                    <td>${item.TotalFamilyMembers.toLocaleString()}</td>
                     <td>${item.TotalAdopted.toLocaleString()}</td>
-                    <td>${item.TotalMargadarsiMobilized.toLocaleString()}</td>
-                    <td>${item.TotalSecretariats.toLocaleString()}</td>
-                    <td>${item.CoveredSecretariats.toLocaleString()}</td>
                     <td>
                         <div class="coverage-cell">
-                            <span>${coverageRate}%</span>
+                            <span>${item.AdoptionRate}%</span>
                             <div class="coverage-bar">
-                                <div class="coverage-fill" style="width: ${coverageRate}%"></div>
+                                <div class="coverage-fill" style="width: ${item.AdoptionRate}%"></div>
                             </div>
                         </div>
+                    </td>
+                    <td>
+                        <span class="performance-badge ${performanceClass}">
+                            ${performanceLabel}
+                        </span>
                     </td>
                 `;
                 tableBody.appendChild(row);
             });
+            
+            // Add performance badge styling
+            const style = document.createElement('style');
+            style.innerHTML = `
+                .performance-badge {
+                    padding: 4px 8px;
+                    border-radius: 12px;
+                    font-size: 0.8rem;
+                    font-weight: 500;
+                }
+                .performance-badge.high {
+                    background-color: #d1fae5;
+                    color: #065f46;
+                }
+                .performance-badge.medium {
+                    background-color: #fef3c7;
+                    color: #92400e;
+                }
+                .performance-badge.low {
+                    background-color: #fee2e2;
+                    color: #991b1b;
+                }
+            `;
+            document.head.appendChild(style);
         }
         
         function updateCharts() {
@@ -771,68 +790,19 @@
                 barChart = echarts.init(document.getElementById('barChart'));
             }
             
-            // Pie Chart: Families vs Adopted
-            const totalFamilies = filteredData.reduce((sum, item) => sum + item.TotalFamilies, 0);
-            const totalAdopted = filteredData.reduce((sum, item) => sum + item.TotalAdopted, 0);
-            const notAdopted = totalFamilies - totalAdopted;
-            
-            pieChart.setOption({
-                tooltip: {
-                    trigger: 'item',
-                    formatter: '{a} <br/>{b}: {c} ({d}%)'
-                },
-                legend: {
-                    orient: 'vertical',
-                    right: 10,
-                    top: 'center',
-                    data: ['Adopted Families', 'Not Adopted'],
-                    textStyle: {
-                        color: '#1e293b'
-                    }
-                },
-                series: [{
-                    name: 'Families',
-                    type: 'pie',
-                    radius: ['40%', '70%'],
-                    avoidLabelOverlap: false,
-                    itemStyle: {
-                        borderRadius: 10,
-                        borderColor: '#fff',
-                        borderWidth: 2
-                    },
-                    label: {
-                        show: false,
-                        position: 'center'
-                    },
-                    emphasis: {
-                        label: {
-                            show: true,
-                            fontSize: '18',
-                            fontWeight: 'bold',
-                            color: '#2563eb'
-                        }
-                    },
-                    labelLine: {
-                        show: false
-                    },
-                    data: [
-                        { value: totalAdopted, name: 'Adopted Families', itemStyle: { color: '#2563eb' } },
-                        { value: notAdopted, name: 'Not Adopted', itemStyle: { color: '#ec4899' } }
-                    ]
-                }]
-            });
-            
-            // Bar Chart: Coverage by Mandal
-            const sortedData = [...filteredData].sort((a, b) => b.CoverageRate - a.CoverageRate);
+            // Sort data by adoption rate
+            const sortedData = [...filteredData].sort((a, b) => b.AdoptionRate - a.AdoptionRate);
             const mandals = sortedData.map(item => item.MandalName);
-            const coverageRates = sortedData.map(item => item.CoverageRate);
+            const adoptionRates = sortedData.map(item => item.AdoptionRate);
             
+            // Bar Chart: Adoption Rate by Mandal
             barChart.setOption({
                 tooltip: {
                     trigger: 'axis',
                     axisPointer: {
                         type: 'shadow'
-                    }
+                    },
+                    formatter: '{b}<br/>Adoption Rate: {c}%'
                 },
                 grid: {
                     left: '3%',
@@ -843,7 +813,8 @@
                 xAxis: {
                     type: 'value',
                     axisLabel: {
-                        color: '#1e293b'
+                        color: '#1e293b',
+                        formatter: '{value}%'
                     },
                     axisLine: {
                         lineStyle: {
@@ -870,13 +841,13 @@
                     }
                 },
                 series: [{
-                    name: 'Coverage Rate',
+                    name: 'Adoption Rate',
                     type: 'bar',
-                    data: coverageRates.map(rate => ({
+                    data: adoptionRates.map(rate => ({
                         value: rate,
                         itemStyle: {
-                            color: rate > 75 ? '#2563eb' : 
-                                   rate > 50 ? '#ec4899' : '#f59e0b'
+                            color: rate > 75 ? '#10b981' : 
+                                   rate > 50 ? '#f59e0b' : '#ef4444'
                         }
                     })),
                     label: {
@@ -885,6 +856,70 @@
                         formatter: '{c}%',
                         color: '#1e293b'
                     }
+                }]
+            });
+            
+            // Pie Chart: Adoption Rate Distribution
+            const adoptionCategories = [
+                { name: 'High (>75%)', min: 75, color: '#10b981', count: 0 },
+                { name: 'Medium (50-75%)', min: 50, color: '#f59e0b', count: 0 },
+                { name: 'Low (<50%)', min: 0, color: '#ef4444', count: 0 }
+            ];
+            
+            filteredData.forEach(item => {
+                if (item.AdoptionRate > 75) {
+                    adoptionCategories[0].count++;
+                } else if (item.AdoptionRate > 50) {
+                    adoptionCategories[1].count++;
+                } else {
+                    adoptionCategories[2].count++;
+                }
+            });
+            
+            pieChart.setOption({
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{a} <br/>{b}: {c} mandals ({d}%)'
+                },
+                legend: {
+                    orient: 'vertical',
+                    right: 10,
+                    top: 'center',
+                    data: adoptionCategories.map(cat => cat.name),
+                    textStyle: {
+                        color: '#1e293b'
+                    }
+                },
+                series: [{
+                    name: 'Adoption Rate Distribution',
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    avoidLabelOverlap: false,
+                    itemStyle: {
+                        borderRadius: 10,
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    },
+                    label: {
+                        show: false,
+                        position: 'center'
+                    },
+                    emphasis: {
+                        label: {
+                            show: true,
+                            fontSize: '18',
+                            fontWeight: 'bold',
+                            color: '#2563eb'
+                        }
+                    },
+                    labelLine: {
+                        show: false
+                    },
+                    data: adoptionCategories.map(cat => ({
+                        value: cat.count,
+                        name: cat.name,
+                        itemStyle: { color: cat.color }
+                    }))
                 }]
             });
             
@@ -900,21 +935,22 @@
             
             // Add new markers for filtered data
             filteredData.forEach(item => {
-                const coverageRate = item.CoverageRate;
-                
-                // Determine marker color based on coverage rate
+                // Determine marker color based on adoption rate
                 let markerColor;
-                if (coverageRate > 75) markerColor = '#2563eb';
-                else if (coverageRate > 50) markerColor = '#ec4899';
-                else markerColor = '#f59e0b';
+                if (item.AdoptionRate > 75) markerColor = '#10b981';
+                else if (item.AdoptionRate > 50) markerColor = '#f59e0b';
+                else markerColor = '#ef4444';
+                
+                // Calculate marker size based on total families (scaled for visibility)
+                const markerSize = Math.min(40, Math.max(20, Math.sqrt(item.TotalFamilies) * 2));
                 
                 // Create custom marker icon
                 const markerIcon = L.divIcon({
                     className: 'custom-marker',
                     html: `
                         <div style="
-                            width: 24px; 
-                            height: 24px; 
+                            width: ${markerSize}px; 
+                            height: ${markerSize}px; 
                             background: ${markerColor};
                             border: 2px solid white;
                             border-radius: 50%;
@@ -923,14 +959,14 @@
                             align-items: center;
                             color: white;
                             font-weight: bold;
-                            font-size: 10px;
+                            font-size: ${markerSize/3}px;
                             box-shadow: 0 0 10px rgba(0,0,0,0.2);
                         ">
-                            ${coverageRate}%
+                            ${item.AdoptionRate}%
                         </div>
                     `,
-                    iconSize: [24, 24],
-                    iconAnchor: [12, 12]
+                    iconSize: [markerSize, markerSize],
+                    iconAnchor: [markerSize/2, markerSize/2]
                 });
                 
                 // Create marker with popup
@@ -941,7 +977,7 @@
                             <h3 style="color: ${markerColor}; margin: 5px 0;">${item.MandalName}</h3>
                             <p><strong>Families:</strong> ${item.TotalFamilies.toLocaleString()}</p>
                             <p><strong>Adopted:</strong> ${item.TotalAdopted.toLocaleString()}</p>
-                            <p><strong>Coverage:</strong> ${coverageRate}%</p>
+                            <p><strong>Adoption Rate:</strong> ${item.AdoptionRate}%</p>
                         </div>
                     `);
                 
