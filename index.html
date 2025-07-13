@@ -21,6 +21,9 @@
             --text-secondary: #AAAAAA;
             --glass: rgba(255, 255, 255, 0.05);
             --glass-border: rgba(255, 255, 255, 0.1);
+            --filter-bg: rgba(0, 245, 255, 0.1);
+            --filter-border: rgba(0, 245, 255, 0.3);
+            --filter-text: #00F5FF;
         }
 
         * {
@@ -187,17 +190,18 @@
         .filter-label {
             display: block;
             margin-bottom: 0.5rem;
-            color: var(--text-secondary);
+            color: var(--filter-text);
             font-size: 0.9rem;
+            font-weight: 600;
         }
 
         .filter-select {
             width: 100%;
             padding: 0.8rem 1rem;
-            background: var(--glass);
-            border: 1px solid var(--glass-border);
+            background: var(--filter-bg);
+            border: 1px solid var(--filter-border);
             border-radius: 4px;
-            color: var(--text-primary);
+            color: var(--filter-text);
             font-family: 'Exo 2', sans-serif;
             appearance: none;
             cursor: pointer;
@@ -206,22 +210,24 @@
 
         .filter-select:hover {
             border-color: var(--neon-blue);
+            box-shadow: 0 0 10px rgba(0, 245, 255, 0.2);
         }
 
         .filter-select:focus {
             outline: none;
             border-color: var(--neon-blue);
-            box-shadow: 0 0 0 2px rgba(0, 245, 255, 0.2);
+            box-shadow: 0 0 15px rgba(0, 245, 255, 0.4);
         }
 
-        .filter-select::after {
+        .filter-group::after {
             content: '▼';
             position: absolute;
             right: 1rem;
-            top: 50%;
+            top: 60%;
             transform: translateY(-50%);
             pointer-events: none;
-            color: var(--text-secondary);
+            color: var(--filter-text);
+            font-size: 0.8rem;
         }
 
         .cards-container {
@@ -618,7 +624,9 @@
             // Fetch data from Google Sheets
             async function fetchData() {
                 // Replace with your Google Sheets published URL
-                const sheetUrl = 'https://docs.google.com/spreadsheets/d/1Z9a7qJPdegiqm-NGQztyOru2LPG2zmK-AAMH_L6RjSs/gviz/tq?tqx=out:csv';
+                // For public sheets: Use "https://docs.google.com/spreadsheets/d/1Z9a7qJPdegiqm-NGQztyOru2LPG2zmK-AAMH_L6RjSs/gviz/tq?tqx=out:csv"
+                // For private sheets: You'll need to publish to web first (File > Share > Publish to web)
+                const sheetUrl = 'https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/gviz/tq?tqx=out:csv';
                 
                 try {
                     const response = await fetch(sheetUrl);
@@ -626,14 +634,20 @@
                     
                     // Parse CSV data
                     const rows = csvData.split('\n');
-                    const headers = rows[0].split(',');
+                    const headers = rows[0].split(',').map(h => h.trim().replace(/"/g, ''));
                     
                     for (let i = 1; i < rows.length; i++) {
-                        const rowData = rows[i].split(',');
+                        // Handle quoted values that might contain commas
+                        const rowData = rows[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
                         if (rowData.length === headers.length) {
                             const entry = {};
                             for (let j = 0; j < headers.length; j++) {
-                                entry[headers[j].trim()] = rowData[j].trim();
+                                let value = rowData[j].trim().replace(/"/g, '');
+                                // Convert numeric values to numbers
+                                if (!isNaN(value) && value !== '') {
+                                    value = Number(value);
+                                }
+                                entry[headers[j]] = value;
                             }
                             allData.push(entry);
                         }
@@ -646,15 +660,8 @@
                     
                 } catch (error) {
                     console.error('Error fetching data:', error);
-                    // Fallback to sample data if fetch fails
-                    loadSampleData();
+                    alert('Error loading data from Google Sheets. Please check the sheet URL and try again.');
                 }
-            }
-            
-           
-                filteredData = [...allData];
-                updateDashboard();
-                populateFilters();
             }
             
             // Populate filter dropdowns
@@ -662,7 +669,16 @@
                 const constituencyFilter = document.getElementById('constituency-filter');
                 const mandalFilter = document.getElementById('mandal-filter');
                 
-                // Extract unique constituencies (in a real app, this would come from your data)
+                // Clear existing options (except the first one)
+                while (constituencyFilter.options.length > 1) {
+                    constituencyFilter.remove(1);
+                }
+                while (mandalFilter.options.length > 1) {
+                    mandalFilter.remove(1);
+                }
+                
+                // Extract unique constituencies (if your data has this field)
+                // For now, we'll just use a sample
                 const constituencies = ['Constituency A', 'Constituency B', 'Constituency C'];
                 constituencies.forEach(constituency => {
                     const option = document.createElement('option');
@@ -688,14 +704,14 @@
                 const dataType = document.getElementById('data-type-filter').value;
                 
                 filteredData = allData.filter(item => {
-                    // In a real app, you would filter by constituency if your data has that field
-                    // For now, we'll just filter by mandal and data type
                     let matches = true;
                     
+                    // Filter by mandal if selected
                     if (mandal && item.MandalName !== mandal) {
                         matches = false;
                     }
                     
+                    // Filter by data type (Rural/Urban)
                     if (dataType === 'rural' && !item.MandalName.includes('(R)')) {
                         matches = false;
                     }
@@ -703,6 +719,11 @@
                     if (dataType === 'urban' && !item.MandalName.includes('(U)')) {
                         matches = false;
                     }
+                    
+                    // In a real app, you would also filter by constituency if your data has that field
+                    // if (constituency && item.Constituency !== constituency) {
+                    //     matches = false;
+                    // }
                     
                     return matches;
                 });
@@ -721,10 +742,10 @@
             
             // Update summary cards
             function updateSummaryCards() {
-                const totalFamilies = filteredData.reduce((sum, item) => sum + parseInt(item.TotalFamilies || 0), 0);
-                const totalMembers = filteredData.reduce((sum, item) => sum + parseInt(item.TotalFamilyMembers || 0), 0);
-                const totalAdopted = filteredData.reduce((sum, item) => sum + parseInt(item.TotalAdopted || 0), 0);
-                const totalSecretariats = filteredData.reduce((sum, item) => sum + parseInt(item.TotalSecretariats || item.TotalSecretariats || 0), 0);
+                const totalFamilies = filteredData.reduce((sum, item) => sum + (Number(item.TotalFamilies) || 0, 0);
+                const totalMembers = filteredData.reduce((sum, item) => sum + (Number(item.TotalFamilyMembers) || 0, 0);
+                const totalAdopted = filteredData.reduce((sum, item) => sum + (Number(item.TotalAdopted) || 0, 0);
+                const totalSecretariats = filteredData.reduce((sum, item) => sum + (Number(item.TotalSecretariats) || 0, 0);
                 
                 document.getElementById('total-families').textContent = totalFamilies.toLocaleString();
                 document.getElementById('total-members').textContent = totalMembers.toLocaleString();
@@ -736,8 +757,8 @@
             let adoptionChart;
             function updateAdoptionChart() {
                 const ctx = document.getElementById('adoptionChart').getContext('2d');
-                const totalFamilies = filteredData.reduce((sum, item) => sum + parseInt(item.TotalFamilies || 0), 0);
-                const totalAdopted = filteredData.reduce((sum, item) => sum + parseInt(item.TotalAdopted || 0), 0);
+                const totalFamilies = filteredData.reduce((sum, item) => sum + (Number(item.TotalFamilies) || 0), 0);
+                const totalAdopted = filteredData.reduce((sum, item) => sum + (Number(item.TotalAdopted) || 0), 0);
                 const nonAdopted = totalFamilies - totalAdopted;
                 
                 if (adoptionChart) {
@@ -787,8 +808,8 @@
             let coverageChart;
             function updateCoverageChart() {
                 const ctx = document.getElementById('coverageChart').getContext('2d');
-                const totalSecretariats = filteredData.reduce((sum, item) => sum + parseInt(item.TotalSecretariats || item.TotalSecretariats || 0), 0);
-                const coveredSecretariats = filteredData.reduce((sum, item) => sum + parseInt(item.CoveredSecretariats || 0), 0);
+                const totalSecretariats = filteredData.reduce((sum, item) => sum + (Number(item.TotalSecretariats) || 0), 0);
+                const coveredSecretariats = filteredData.reduce((sum, item) => sum + (Number(item.CoveredSecretariats) || 0), 0);
                 const uncovered = totalSecretariats - coveredSecretariats;
                 
                 if (coverageChart) {
@@ -844,12 +865,12 @@
                     
                     row.innerHTML = `
                         <td>${item.MandalName}</td>
-                        <td>${parseInt(item.TotalFamilies || 0).toLocaleString()}</td>
-                        <td>${parseInt(item.TotalFamilyMembers || 0).toLocaleString()}</td>
-                        <td>${parseInt(item.TotalAdopted || 0).toLocaleString()}</td>
-                        <td>${parseInt(item.TotalMargadarsiMobilized || 0).toLocaleString()}</td>
-                        <td>${parseInt(item.TotalSecretariats || item.TotalSecretariats || 0).toLocaleString()}</td>
-                        <td>${parseInt(item.CoveredSecretariats || 0).toLocaleString()}</td>
+                        <td>${(Number(item.TotalFamilies) || 0).toLocaleString()}</td>
+                        <td>${(Number(item.TotalFamilyMembers) || 0).toLocaleString()}</td>
+                        <td>${(Number(item.TotalAdopted) || 0).toLocaleString()}</td>
+                        <td>${(Number(item.TotalMargadarsiMobilized) || 0).toLocaleString()}</td>
+                        <td>${(Number(item.TotalSecretariats) || 0).toLocaleString()}</td>
+                        <td>${(Number(item.CoveredSecretariats) || 0).toLocaleString()}</td>
                     `;
                     
                     tableBody.appendChild(row);
@@ -879,10 +900,10 @@
                     const lat = 16.5 + (Math.random() * 2 - 1);
                     const lng = 81.0 + (Math.random() * 2 - 1);
                     
-                    const adoptedPercentage = (parseInt(item.TotalAdopted || 0) / parseInt(item.TotalFamilies || 1) * 100).toFixed(1);
+                    const adoptedPercentage = ((Number(item.TotalAdopted) || 0) / (Number(item.TotalFamilies) || 1) * 100).toFixed(1);
                     
                     L.circleMarker([lat, lng], {
-                        radius: 5 + (parseInt(item.TotalFamilies || 0) / 500),
+                        radius: 5 + ((Number(item.TotalFamilies) || 0) / 500),
                         fillColor: getColorForAdoption(adoptedPercentage),
                         color: '#fff',
                         weight: 1,
@@ -890,8 +911,8 @@
                         fillOpacity: 0.8
                     }).bindPopup(`
                         <b>${item.MandalName}</b><br>
-                        Families: ${parseInt(item.TotalFamilies || 0).toLocaleString()}<br>
-                        Adopted: ${parseInt(item.TotalAdopted || 0).toLocaleString()} (${adoptedPercentage}%)
+                        Families: ${(Number(item.TotalFamilies) || 0).toLocaleString()}<br>
+                        Adopted: ${(Number(item.TotalAdopted) || 0).toLocaleString()} (${adoptedPercentage}%)
                     `).addTo(map);
                 });
             }
@@ -909,8 +930,8 @@
             document.getElementById('mandal-filter').addEventListener('change', filterData);
             document.getElementById('data-type-filter').addEventListener('change', filterData);
             
-            // Initialize with sample data (in a real app, you would call fetchData())
-            loadSampleData();
+            // Initialize with data from Google Sheets
+            fetchData();
             
             // Add scroll animations
             const fadeElements = document.querySelectorAll('.fade-in');
