@@ -530,21 +530,30 @@
         </div>
         
         <div class="data-table-container">
-            <h3 style="color: var(--primary); margin-top: 0;"><i class="fas fa-table"></i> ADOPTION DETAILS BY MANDAL</h3>
-            <table id="data-table">
-                <thead>
-                    <tr>
-                        <th>Mandal</th>
-                        <th>Families</th>
-                        <th>Adopted</th>
-                        <th>Adoption Rate</th>
-                        <th>Performance</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+            <h3 style="color: var(--primary); margin-top: 0;"><i class="fas fa-table"></i> COMPLETE MANDAL DATA</h3>
+            <div style="overflow-x: auto;">
+                <table id="data-table">
+                    <thead>
+                        <tr>
+                            <th>Mandal</th>
+                            <th>Constituency</th>
+                            <th>Families</th>
+                            <th>Members</th>
+                            <th>Adopted</th>
+                            <th>Adoption Rate</th>
+                            <th>Margadarsi</th>
+                            <th>Total Secretariats</th>
+                            <th>Covered</th>
+                            <th>Coverage Rate</th>
+                            <th>Performance</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </div>
     </div>
+
 
     <script>
         // Google Sheets URL - Replace with your published sheet URL
@@ -728,24 +737,42 @@
             const sortedData = [...filteredData].sort((a, b) => b.AdoptionRate - a.AdoptionRate);
             
             sortedData.forEach(item => {
+                const adoptionRate = item.AdoptionRate;
+                const coverageRate = item.TotalSecretariats > 0 
+                    ? Math.round((item.CoveredSecretariats / item.TotalSecretariats) * 100)
+                    : 0;
+                
                 const performanceClass = 
-                    item.AdoptionRate > 75 ? 'high' : 
-                    item.AdoptionRate > 50 ? 'medium' : 'low';
+                    adoptionRate > 75 ? 'high' : 
+                    adoptionRate > 50 ? 'medium' : 'low';
                 
                 const performanceLabel = 
-                    item.AdoptionRate > 75 ? 'High' : 
-                    item.AdoptionRate > 50 ? 'Medium' : 'Low';
+                    adoptionRate > 75 ? 'High' : 
+                    adoptionRate > 50 ? 'Medium' : 'Low';
                 
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${item.MandalName}</td>
-                    <td>${item.TotalFamilies.toLocaleString()}</td>
-                    <td>${item.TotalAdopted.toLocaleString()}</td>
+                    <td>${item.Constituency}</td>
+                    <td class="numeric-cell">${item.TotalFamilies.toLocaleString()}</td>
+                    <td class="numeric-cell">${item.TotalFamilyMembers.toLocaleString()}</td>
+                    <td class="numeric-cell">${item.TotalAdopted.toLocaleString()}</td>
                     <td>
-                        <div class="coverage-cell">
-                            <span>${item.AdoptionRate}%</span>
-                            <div class="coverage-bar">
-                                <div class="coverage-fill" style="width: ${item.AdoptionRate}%"></div>
+                        <div class="percentage-cell">
+                            <span>${adoptionRate}%</span>
+                            <div class="percentage-bar">
+                                <div class="percentage-fill" style="width: ${adoptionRate}%"></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="numeric-cell">${item.TotalMargadarsiMobilized.toLocaleString()}</td>
+                    <td class="numeric-cell">${item.TotalSecretariats.toLocaleString()}</td>
+                    <td class="numeric-cell">${item.CoveredSecretariats.toLocaleString()}</td>
+                    <td>
+                        <div class="percentage-cell">
+                            <span>${coverageRate}%</span>
+                            <div class="percentage-bar">
+                                <div class="percentage-fill" style="width: ${coverageRate}%"></div>
                             </div>
                         </div>
                     </td>
@@ -757,30 +784,6 @@
                 `;
                 tableBody.appendChild(row);
             });
-            
-            // Add performance badge styling
-            const style = document.createElement('style');
-            style.innerHTML = `
-                .performance-badge {
-                    padding: 4px 8px;
-                    border-radius: 12px;
-                    font-size: 0.8rem;
-                    font-weight: 500;
-                }
-                .performance-badge.high {
-                    background-color: #d1fae5;
-                    color: #065f46;
-                }
-                .performance-badge.medium {
-                    background-color: #fef3c7;
-                    color: #92400e;
-                }
-                .performance-badge.low {
-                    background-color: #fee2e2;
-                    color: #991b1b;
-                }
-            `;
-            document.head.appendChild(style);
         }
         
         function updateCharts() {
