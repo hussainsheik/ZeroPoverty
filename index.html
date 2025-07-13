@@ -651,38 +651,7 @@
                 }
             }
             
-            // Sample data for demonstration
-            function loadSampleData() {
-                allData = [
-                    { MandalName: "Achanta (R)", TotalFamilies: "1250", TotalFamilyMembers: "5120", TotalAdopted: "320", TotalMargadarsiMobilized: "45", TotalSecretariats: "18", CoveredSecretariats: "15" },
-                    { MandalName: "Penugonda (R)", TotalFamilies: "980", TotalFamilyMembers: "4020", TotalAdopted: "210", TotalMargadarsiMobilized: "32", TotalSecretariats: "15", CoveredSecretariats: "12" },
-                    { MandalName: "Penumantra (R)", TotalFamilies: "1100", TotalFamilyMembers: "4500", TotalAdopted: "280", TotalMargadarsiMobilized: "40", TotalSecretariats: "16", CoveredSecretariats: "14" },
-                    { MandalName: "Poduru (R)", TotalFamilies: "850", TotalFamilyMembers: "3500", TotalAdopted: "180", TotalMargadarsiMobilized: "28", TotalSecretariats: "12", CoveredSecretariats: "10" },
-                    { MandalName: "Bhimavaram (R)", TotalFamilies: "1500", TotalFamilyMembers: "6200", TotalAdopted: "420", TotalMargadarsiMobilized: "60", TotalSecretariats: "22", CoveredSecretariats: "20" },
-                    { MandalName: "Bhimavaram (U)", TotalFamilies: "1800", TotalFamilyMembers: "7500", TotalAdopted: "550", TotalMargadarsiMobilized: "75", TotalSecretariats: "25", CoveredSecretariats: "22" },
-                    { MandalName: "Veeravasaram (R)", TotalFamilies: "920", TotalFamilyMembers: "3800", TotalAdopted: "190", TotalMargadarsiMobilized: "30", TotalSecretariats: "14", CoveredSecretariats: "11" },
-                    { MandalName: "Mogalturu (R)", TotalFamilies: "780", TotalFamilyMembers: "3200", TotalAdopted: "160", TotalMargadarsiMobilized: "25", TotalSecretariats: "11", CoveredSecretariats: "9" },
-                    { MandalName: "Narasapur (U)", TotalFamilies: "1600", TotalFamilyMembers: "6700", TotalAdopted: "480", TotalMargadarsiMobilized: "70", TotalSecretariats: "24", CoveredSecretariats: "21" },
-                    { MandalName: "Narasapuram (R)", TotalFamilies: "1350", TotalFamilyMembers: "5600", TotalAdopted: "350", TotalMargadarsiMobilized: "50", TotalSecretariats: "20", CoveredSecretariats: "18" },
-                    { MandalName: "Elamanchili (R)", TotalFamilies: "1050", TotalFamilyMembers: "4300", TotalAdopted: "240", TotalMargadarsiMobilized: "35", TotalSecretariats: "15", CoveredSecretariats: "13" },
-                    { MandalName: "Palakol (R)", TotalFamilies: "1420", TotalFamilyMembers: "5800", TotalAdopted: "380", TotalMargadarsiMobilized: "55", TotalSecretariats: "21", CoveredSecretariats: "19" },
-                    { MandalName: "Palakol (U)", TotalFamilies: "1750", TotalFamilyMembers: "7200", TotalAdopted: "520", TotalMargadarsiMobilized: "72", TotalSecretariats: "26", CoveredSecretariats: "23" },
-                    { MandalName: "Poduru (R)", TotalFamilies: "850", TotalFamilyMembers: "3500", TotalAdopted: "180", TotalMargadarsiMobilized: "28", TotalSecretariats: "12", CoveredSecretariats: "10" },
-                    { MandalName: "Pentapadu (R)", TotalFamilies: "950", TotalFamilyMembers: "3900", TotalAdopted: "200", TotalMargadarsiMobilized: "30", TotalSecretariats: "13", CoveredSecretariats: "11" },
-                    { MandalName: "Tadepalligudem (R)", TotalFamilies: "1200", TotalFamilyMembers: "4900", TotalAdopted: "300", TotalMargadarsiMobilized: "42", TotalSecretariats: "17", CoveredSecretariats: "15" },
-                    { MandalName: "Tadepalligudem (U)", TotalFamilies: "1550", TotalFamilyMembers: "6400", TotalAdopted: "450", TotalMargadarsiMobilized: "65", TotalSecretariats: "23", CoveredSecretariats: "20" },
-                    { MandalName: "Attili (R)", TotalFamilies: "880", TotalFamilyMembers: "3600", TotalAdopted: "170", TotalMargadarsiMobilized: "26", TotalSecretariats: "12", CoveredSecretariats: "10" },
-                    { MandalName: "Iragavaram (R)", TotalFamilies: "760", TotalFamilyMembers: "3100", TotalAdopted: "150", TotalMargadarsiMobilized: "24", TotalSecretariats: "10", CoveredSecretariats: "8" },
-                    { MandalName: "Tanuku (R)", TotalFamilies: "1300", TotalFamilyMembers: "5300", TotalAdopted: "330", TotalMargadarsiMobilized: "48", TotalSecretariats: "19", CoveredSecretariats: "17" },
-                    { MandalName: "Tanuku (U)", TotalFamilies: "1650", TotalFamilyMembers: "6800", TotalAdopted: "490", TotalMargadarsiMobilized: "68", TotalSecretariats: "24", CoveredSecretariats: "21" },
-                    { MandalName: "Akiveedu (R)", TotalFamilies: "1020", TotalFamilyMembers: "4200", TotalAdopted: "230", TotalMargadarsiMobilized: "34", TotalSecretariats: "14", CoveredSecretariats: "12" },
-                    { MandalName: "Akiveedu (U)", TotalFamilies: "1250", TotalFamilyMembers: "5200", TotalAdopted: "310", TotalMargadarsiMobilized: "44", TotalSecretariats: "16", CoveredSecretariats: "14" },
-                    { MandalName: "Kalla (R)", TotalFamilies: "890", TotalFamilyMembers: "3700", TotalAdopted: "180", TotalMargadarsiMobilized: "27", TotalSecretariats: "12", CoveredSecretariats: "10" },
-                    { MandalName: "Palakoderu (R)", TotalFamilies: "940", TotalFamilyMembers: "3900", TotalAdopted: "190", TotalMargadarsiMobilized: "29", TotalSecretariats: "13", CoveredSecretariats: "11" },
-                    { MandalName: "Undi (R)", TotalFamilies: "1100", TotalFamilyMembers: "4500", TotalAdopted: "270", TotalMargadarsiMobilized: "39", TotalSecretariats: "15", CoveredSecretariats: "13" },
-                    { MandalName: "Ganapavaram (R)", TotalFamilies: "1150", TotalFamilyMembers: "4700", TotalAdopted: "290", TotalMargadarsiMobilized: "41", TotalSecretariats: "16", CoveredSecretariats: "14" }
-                ];
-                
+           
                 filteredData = [...allData];
                 updateDashboard();
                 populateFilters();
