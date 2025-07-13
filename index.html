@@ -1,41 +1,967 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Margadarsi Debug</title>
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Mandal Dashboard | Futuristic Data Visualization</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.11.4/dist/gsap.min.js"></script>
+    <style>
+        :root {
+            --bg-dark: #0A0A0A;
+            --bg-darker: #050505;
+            --bg-light: #121212;
+            --neon-blue: #00F5FF;
+            --neon-pink: #FF00F5;
+            --neon-green: #00FFA3;
+            --text-primary: #FFFFFF;
+            --text-secondary: #AAAAAA;
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-dark), var(--bg-darker));
+            color: var(--text-primary);
+            font-family: 'Exo 2', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(0, 245, 255, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 80% 70%, rgba(255, 0, 245, 0.1) 0%, transparent 20%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: fixed;
+            background: var(--neon-blue);
+            border-radius: 50%;
+            filter: blur(1px);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 1.5rem 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            background: var(--glass);
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-pink));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 10px rgba(0, 245, 255, 0.3);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-family: 'Exo 2', sans-serif;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-link:hover {
+            color: var(--neon-blue);
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--neon-blue);
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        .container {
+            margin-top: 100px;
+            padding: 2rem;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 5rem 2rem;
+            position: relative;
+        }
+
+        .hero h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-pink));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 20px rgba(0, 245, 255, 0.3);
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            max-width: 700px;
+            margin: 0 auto 2rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .dashboard-section {
+            margin: 3rem 0;
+        }
+
+        .section-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            color: var(--neon-green);
+            display: flex;
+            align-items: center;
+        }
+
+        .section-title::before {
+            content: '';
+            display: inline-block;
+            width: 30px;
+            height: 3px;
+            background: var(--neon-green);
+            margin-right: 15px;
+        }
+
+        .filters {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            position: relative;
+            min-width: 200px;
+        }
+
+        .filter-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .filter-select {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-family: 'Exo 2', sans-serif;
+            appearance: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-select:hover {
+            border-color: var(--neon-blue);
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 0 2px rgba(0, 245, 255, 0.2);
+        }
+
+        .filter-select::after {
+            content: '▼';
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            color: var(--text-secondary);
+        }
+
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .card {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            border-color: var(--neon-blue);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(0, 245, 255, 0.05), transparent);
+            z-index: -1;
+        }
+
+        .card-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: var(--neon-blue);
+        }
+
+        .card-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-green));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .card-description {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .chart-container {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(255, 0, 245, 0.05), transparent);
+            z-index: -1;
+        }
+
+        .chart-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: var(--neon-pink);
+        }
+
+        .map-container {
+            height: 500px;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .map-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(0, 255, 163, 0.05), transparent);
+            z-index: -1;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            background: var(--glass);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .data-table th, .data-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .data-table th {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--neon-blue);
+            background: rgba(0, 245, 255, 0.1);
+        }
+
+        .data-table tr:hover td {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            margin-top: 3rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .glow-button {
+            padding: 0.8rem 2rem;
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-pink));
+            color: var(--bg-dark);
+            border: none;
+            border-radius: 50px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(0, 245, 255, 0.5);
+        }
+
+        .glow-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 25px rgba(0, 245, 255, 0.8);
+        }
+
+        .glow-button::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to bottom right,
+                rgba(255, 255, 255, 0) 0%,
+                rgba(255, 255, 255, 0.1) 50%,
+                rgba(255, 255, 255, 0) 100%
+            );
+            transform: rotate(30deg);
+            transition: all 0.5s ease;
+        }
+
+        .glow-button:hover::before {
+            left: 100%;
+            top: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 1rem;
+            }
+            
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .filters {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .filter-group {
+                min-width: 100%;
+            }
+            
+            .cards-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Animation classes */
+        .fade-in {
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(0, 245, 255, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(0, 245, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 245, 255, 0); }
+        }
+    </style>
 </head>
 <body>
-  <h1>Data Debugger</h1>
-  <div id="output"></div>
-
-  <script>
-    const SHEET_ID = '1YxtKYmBhNEQFUQrq_8bug9Zh_j0CjJ3LzfoCrNpUdhA';
-    const SHEET_NAME = 'Form Responses 1';
-    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
-
-    document.getElementById('output').innerHTML = `<p>Loading from: ${url}</p>`;
+    <div class="particles"></div>
     
-    fetch(url)
-      .then(r => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.text();
-      })
-      .then(csv => {
-        document.getElementById('output').innerHTML += `<pre>${csv.substring(0, 500)}...</pre>`;
-        Papa.parse(csv, {
-          header: true,
-          complete: function(results) {
-            console.log("Parsed results:", results);
-            document.getElementById('output').innerHTML += 
-              `<h2>First 3 rows:</h2><pre>${JSON.stringify(results.data.slice(0, 3), null, 2)}</pre>`;
-          }
+    <nav class="navbar">
+        <div class="logo">MANDAL ANALYTICS</div>
+        <div class="nav-links">
+            <a href="#" class="nav-link">Dashboard</a>
+            <a href="#" class="nav-link">Insights</a>
+            <a href="#" class="nav-link">Reports</a>
+            <a href="#" class="nav-link">About</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <section class="hero fade-in">
+            <h1>MANDAL DATA DASHBOARD</h1>
+            <p>Interactive visualization of mandal statistics with futuristic analytics. Filter by constituency or mandal to explore the data in depth.</p>
+            <button class="glow-button pulse">EXPLORE DATA</button>
+        </section>
+
+        <section class="dashboard-section">
+            <h2 class="section-title">DATA FILTERS</h2>
+            <div class="filters">
+                <div class="filter-group">
+                    <label class="filter-label">CONSTITUENCY</label>
+                    <select id="constituency-filter" class="filter-select">
+                        <option value="">All Constituencies</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">MANDAL</label>
+                    <select id="mandal-filter" class="filter-select">
+                        <option value="">All Mandals</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">DATA TYPE</label>
+                    <select id="data-type-filter" class="filter-select">
+                        <option value="all">All Data</option>
+                        <option value="rural">Rural Only</option>
+                        <option value="urban">Urban Only</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="cards-container">
+                <div class="card fade-in" style="animation-delay: 0.1s;">
+                    <h3 class="card-title">TOTAL FAMILIES</h3>
+                    <div class="card-value" id="total-families">0</div>
+                    <p class="card-description">Total number of families in selected area</p>
+                </div>
+                <div class="card fade-in" style="animation-delay: 0.2s;">
+                    <h3 class="card-title">TOTAL MEMBERS</h3>
+                    <div class="card-value" id="total-members">0</div>
+                    <p class="card-description">Total family members across all families</p>
+                </div>
+                <div class="card fade-in" style="animation-delay: 0.3s;">
+                    <h3 class="card-title">ADOPTED</h3>
+                    <div class="card-value" id="total-adopted">0</div>
+                    <p class="card-description">Total adopted families in selected area</p>
+                </div>
+                <div class="card fade-in" style="animation-delay: 0.4s;">
+                    <h3 class="card-title">SECRETARIATS</h3>
+                    <div class="card-value" id="total-secretariats">0</div>
+                    <p class="card-description">Total secretariats mobilized</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="dashboard-section">
+            <h2 class="section-title">ADOPTION RATIO</h2>
+            <div class="chart-container fade-in">
+                <h3 class="chart-title">FAMILIES VS ADOPTED</h3>
+                <canvas id="adoptionChart"></canvas>
+            </div>
+        </section>
+
+        <section class="dashboard-section">
+            <h2 class="section-title">GEOGRAPHICAL DISTRIBUTION</h2>
+            <div class="map-container fade-in" id="map"></div>
+        </section>
+
+        <section class="dashboard-section">
+            <h2 class="section-title">DETAILED DATA</h2>
+            <div class="chart-container fade-in">
+                <h3 class="chart-title">SECRETARIATS COVERAGE</h3>
+                <canvas id="coverageChart"></canvas>
+            </div>
+            <table class="data-table fade-in">
+                <thead>
+                    <tr>
+                        <th>Mandal Name</th>
+                        <th>Total Families</th>
+                        <th>Total Members</th>
+                        <th>Adopted</th>
+                        <th>Margadarsi Mobilized</th>
+                        <th>Total Secretariats</th>
+                        <th>Covered Secretariats</th>
+                    </tr>
+                </thead>
+                <tbody id="data-table-body">
+                    <!-- Data will be populated here -->
+                </tbody>
+            </table>
+        </section>
+    </div>
+
+    <footer class="footer">
+        <p>© 2023 Futuristic Mandal Dashboard | Powered by Neon Analytics</p>
+    </footer>
+
+    <script>
+        // Create particles
+        function createParticles() {
+            const particlesContainer = document.querySelector('.particles');
+            const particleCount = 30;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                
+                // Random size between 1px and 3px
+                const size = Math.random() * 2 + 1;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                
+                // Random position
+                particle.style.left = `${Math.random() * 100}%`;
+                particle.style.top = `${Math.random() * 100}%`;
+                
+                // Random opacity
+                particle.style.opacity = Math.random() * 0.5 + 0.1;
+                
+                // Random animation
+                const duration = Math.random() * 20 + 10;
+                particle.style.animation = `float ${duration}s linear infinite`;
+                
+                // Add to container
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        // Create floating animation
+        const style = document.createElement('style');
+        style.innerHTML = `
+            @keyframes float {
+                0% {
+                    transform: translate(0, 0);
+                }
+                50% {
+                    transform: translate(${Math.random() * 100 - 50}px, ${Math.random() * 100 - 50}px);
+                }
+                100% {
+                    transform: translate(0, 0);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Initialize the dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            createParticles();
+            
+            // Sample data - in a real scenario, this would come from your Google Sheet
+            let allData = [];
+            let filteredData = [];
+            
+            // Fetch data from Google Sheets
+            async function fetchData() {
+                // Replace with your Google Sheets published URL
+                const sheetUrl = 'https://docs.google.com/spreadsheets/d/1Z9a7qJPdegiqm-NGQztyOru2LPG2zmK-AAMH_L6RjSs/gviz/tq?tqx=out:csv';
+                
+                try {
+                    const response = await fetch(sheetUrl);
+                    const csvData = await response.text();
+                    
+                    // Parse CSV data
+                    const rows = csvData.split('\n');
+                    const headers = rows[0].split(',');
+                    
+                    for (let i = 1; i < rows.length; i++) {
+                        const rowData = rows[i].split(',');
+                        if (rowData.length === headers.length) {
+                            const entry = {};
+                            for (let j = 0; j < headers.length; j++) {
+                                entry[headers[j].trim()] = rowData[j].trim();
+                            }
+                            allData.push(entry);
+                        }
+                    }
+                    
+                    // Initialize dashboard with all data
+                    filteredData = [...allData];
+                    updateDashboard();
+                    populateFilters();
+                    
+                } catch (error) {
+                    console.error('Error fetching data:', error);
+                    // Fallback to sample data if fetch fails
+                    loadSampleData();
+                }
+            }
+            
+            // Sample data for demonstration
+            function loadSampleData() {
+                allData = [
+                    { MandalName: "Achanta (R)", TotalFamilies: "1250", TotalFamilyMembers: "5120", TotalAdopted: "320", TotalMargadarsiMobilized: "45", TotalSecretariats: "18", CoveredSecretariats: "15" },
+                    { MandalName: "Penugonda (R)", TotalFamilies: "980", TotalFamilyMembers: "4020", TotalAdopted: "210", TotalMargadarsiMobilized: "32", TotalSecretariats: "15", CoveredSecretariats: "12" },
+                    { MandalName: "Penumantra (R)", TotalFamilies: "1100", TotalFamilyMembers: "4500", TotalAdopted: "280", TotalMargadarsiMobilized: "40", TotalSecretariats: "16", CoveredSecretariats: "14" },
+                    { MandalName: "Poduru (R)", TotalFamilies: "850", TotalFamilyMembers: "3500", TotalAdopted: "180", TotalMargadarsiMobilized: "28", TotalSecretariats: "12", CoveredSecretariats: "10" },
+                    { MandalName: "Bhimavaram (R)", TotalFamilies: "1500", TotalFamilyMembers: "6200", TotalAdopted: "420", TotalMargadarsiMobilized: "60", TotalSecretariats: "22", CoveredSecretariats: "20" },
+                    { MandalName: "Bhimavaram (U)", TotalFamilies: "1800", TotalFamilyMembers: "7500", TotalAdopted: "550", TotalMargadarsiMobilized: "75", TotalSecretariats: "25", CoveredSecretariats: "22" },
+                    { MandalName: "Veeravasaram (R)", TotalFamilies: "920", TotalFamilyMembers: "3800", TotalAdopted: "190", TotalMargadarsiMobilized: "30", TotalSecretariats: "14", CoveredSecretariats: "11" },
+                    { MandalName: "Mogalturu (R)", TotalFamilies: "780", TotalFamilyMembers: "3200", TotalAdopted: "160", TotalMargadarsiMobilized: "25", TotalSecretariats: "11", CoveredSecretariats: "9" },
+                    { MandalName: "Narasapur (U)", TotalFamilies: "1600", TotalFamilyMembers: "6700", TotalAdopted: "480", TotalMargadarsiMobilized: "70", TotalSecretariats: "24", CoveredSecretariats: "21" },
+                    { MandalName: "Narasapuram (R)", TotalFamilies: "1350", TotalFamilyMembers: "5600", TotalAdopted: "350", TotalMargadarsiMobilized: "50", TotalSecretariats: "20", CoveredSecretariats: "18" },
+                    { MandalName: "Elamanchili (R)", TotalFamilies: "1050", TotalFamilyMembers: "4300", TotalAdopted: "240", TotalMargadarsiMobilized: "35", TotalSecretariats: "15", CoveredSecretariats: "13" },
+                    { MandalName: "Palakol (R)", TotalFamilies: "1420", TotalFamilyMembers: "5800", TotalAdopted: "380", TotalMargadarsiMobilized: "55", TotalSecretariats: "21", CoveredSecretariats: "19" },
+                    { MandalName: "Palakol (U)", TotalFamilies: "1750", TotalFamilyMembers: "7200", TotalAdopted: "520", TotalMargadarsiMobilized: "72", TotalSecretariats: "26", CoveredSecretariats: "23" },
+                    { MandalName: "Poduru (R)", TotalFamilies: "850", TotalFamilyMembers: "3500", TotalAdopted: "180", TotalMargadarsiMobilized: "28", TotalSecretariats: "12", CoveredSecretariats: "10" },
+                    { MandalName: "Pentapadu (R)", TotalFamilies: "950", TotalFamilyMembers: "3900", TotalAdopted: "200", TotalMargadarsiMobilized: "30", TotalSecretariats: "13", CoveredSecretariats: "11" },
+                    { MandalName: "Tadepalligudem (R)", TotalFamilies: "1200", TotalFamilyMembers: "4900", TotalAdopted: "300", TotalMargadarsiMobilized: "42", TotalSecretariats: "17", CoveredSecretariats: "15" },
+                    { MandalName: "Tadepalligudem (U)", TotalFamilies: "1550", TotalFamilyMembers: "6400", TotalAdopted: "450", TotalMargadarsiMobilized: "65", TotalSecretariats: "23", CoveredSecretariats: "20" },
+                    { MandalName: "Attili (R)", TotalFamilies: "880", TotalFamilyMembers: "3600", TotalAdopted: "170", TotalMargadarsiMobilized: "26", TotalSecretariats: "12", CoveredSecretariats: "10" },
+                    { MandalName: "Iragavaram (R)", TotalFamilies: "760", TotalFamilyMembers: "3100", TotalAdopted: "150", TotalMargadarsiMobilized: "24", TotalSecretariats: "10", CoveredSecretariats: "8" },
+                    { MandalName: "Tanuku (R)", TotalFamilies: "1300", TotalFamilyMembers: "5300", TotalAdopted: "330", TotalMargadarsiMobilized: "48", TotalSecretariats: "19", CoveredSecretariats: "17" },
+                    { MandalName: "Tanuku (U)", TotalFamilies: "1650", TotalFamilyMembers: "6800", TotalAdopted: "490", TotalMargadarsiMobilized: "68", TotalSecretariats: "24", CoveredSecretariats: "21" },
+                    { MandalName: "Akiveedu (R)", TotalFamilies: "1020", TotalFamilyMembers: "4200", TotalAdopted: "230", TotalMargadarsiMobilized: "34", TotalSecretariats: "14", CoveredSecretariats: "12" },
+                    { MandalName: "Akiveedu (U)", TotalFamilies: "1250", TotalFamilyMembers: "5200", TotalAdopted: "310", TotalMargadarsiMobilized: "44", TotalSecretariats: "16", CoveredSecretariats: "14" },
+                    { MandalName: "Kalla (R)", TotalFamilies: "890", TotalFamilyMembers: "3700", TotalAdopted: "180", TotalMargadarsiMobilized: "27", TotalSecretariats: "12", CoveredSecretariats: "10" },
+                    { MandalName: "Palakoderu (R)", TotalFamilies: "940", TotalFamilyMembers: "3900", TotalAdopted: "190", TotalMargadarsiMobilized: "29", TotalSecretariats: "13", CoveredSecretariats: "11" },
+                    { MandalName: "Undi (R)", TotalFamilies: "1100", TotalFamilyMembers: "4500", TotalAdopted: "270", TotalMargadarsiMobilized: "39", TotalSecretariats: "15", CoveredSecretariats: "13" },
+                    { MandalName: "Ganapavaram (R)", TotalFamilies: "1150", TotalFamilyMembers: "4700", TotalAdopted: "290", TotalMargadarsiMobilized: "41", TotalSecretariats: "16", CoveredSecretariats: "14" }
+                ];
+                
+                filteredData = [...allData];
+                updateDashboard();
+                populateFilters();
+            }
+            
+            // Populate filter dropdowns
+            function populateFilters() {
+                const constituencyFilter = document.getElementById('constituency-filter');
+                const mandalFilter = document.getElementById('mandal-filter');
+                
+                // Extract unique constituencies (in a real app, this would come from your data)
+                const constituencies = ['Constituency A', 'Constituency B', 'Constituency C'];
+                constituencies.forEach(constituency => {
+                    const option = document.createElement('option');
+                    option.value = constituency;
+                    option.textContent = constituency;
+                    constituencyFilter.appendChild(option);
+                });
+                
+                // Extract unique mandals
+                const mandals = [...new Set(allData.map(item => item.MandalName))];
+                mandals.forEach(mandal => {
+                    const option = document.createElement('option');
+                    option.value = mandal;
+                    option.textContent = mandal;
+                    mandalFilter.appendChild(option);
+                });
+            }
+            
+            // Filter data based on selections
+            function filterData() {
+                const constituency = document.getElementById('constituency-filter').value;
+                const mandal = document.getElementById('mandal-filter').value;
+                const dataType = document.getElementById('data-type-filter').value;
+                
+                filteredData = allData.filter(item => {
+                    // In a real app, you would filter by constituency if your data has that field
+                    // For now, we'll just filter by mandal and data type
+                    let matches = true;
+                    
+                    if (mandal && item.MandalName !== mandal) {
+                        matches = false;
+                    }
+                    
+                    if (dataType === 'rural' && !item.MandalName.includes('(R)')) {
+                        matches = false;
+                    }
+                    
+                    if (dataType === 'urban' && !item.MandalName.includes('(U)')) {
+                        matches = false;
+                    }
+                    
+                    return matches;
+                });
+                
+                updateDashboard();
+            }
+            
+            // Update all dashboard elements with filtered data
+            function updateDashboard() {
+                updateSummaryCards();
+                updateAdoptionChart();
+                updateCoverageChart();
+                updateDataTable();
+                updateMap();
+            }
+            
+            // Update summary cards
+            function updateSummaryCards() {
+                const totalFamilies = filteredData.reduce((sum, item) => sum + parseInt(item.TotalFamilies || 0), 0);
+                const totalMembers = filteredData.reduce((sum, item) => sum + parseInt(item.TotalFamilyMembers || 0), 0);
+                const totalAdopted = filteredData.reduce((sum, item) => sum + parseInt(item.TotalAdopted || 0), 0);
+                const totalSecretariats = filteredData.reduce((sum, item) => sum + parseInt(item.TotalSecretariats || item.TotalSecretariats || 0), 0);
+                
+                document.getElementById('total-families').textContent = totalFamilies.toLocaleString();
+                document.getElementById('total-members').textContent = totalMembers.toLocaleString();
+                document.getElementById('total-adopted').textContent = totalAdopted.toLocaleString();
+                document.getElementById('total-secretariats').textContent = totalSecretariats.toLocaleString();
+            }
+            
+            // Adoption pie chart
+            let adoptionChart;
+            function updateAdoptionChart() {
+                const ctx = document.getElementById('adoptionChart').getContext('2d');
+                const totalFamilies = filteredData.reduce((sum, item) => sum + parseInt(item.TotalFamilies || 0), 0);
+                const totalAdopted = filteredData.reduce((sum, item) => sum + parseInt(item.TotalAdopted || 0), 0);
+                const nonAdopted = totalFamilies - totalAdopted;
+                
+                if (adoptionChart) {
+                    adoptionChart.destroy();
+                }
+                
+                adoptionChart = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['Adopted Families', 'Non-Adopted Families'],
+                        datasets: [{
+                            data: [totalAdopted, nonAdopted],
+                            backgroundColor: [
+                                'rgba(0, 245, 255, 0.7)',
+                                'rgba(255, 0, 245, 0.7)'
+                            ],
+                            borderColor: [
+                                'rgba(0, 245, 255, 1)',
+                                'rgba(255, 0, 245, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    color: '#FFFFFF',
+                                    font: {
+                                        family: 'Exo 2'
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                bodyFont: {
+                                    family: 'Exo 2'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Secretariats coverage chart
+            let coverageChart;
+            function updateCoverageChart() {
+                const ctx = document.getElementById('coverageChart').getContext('2d');
+                const totalSecretariats = filteredData.reduce((sum, item) => sum + parseInt(item.TotalSecretariats || item.TotalSecretariats || 0), 0);
+                const coveredSecretariats = filteredData.reduce((sum, item) => sum + parseInt(item.CoveredSecretariats || 0), 0);
+                const uncovered = totalSecretariats - coveredSecretariats;
+                
+                if (coverageChart) {
+                    coverageChart.destroy();
+                }
+                
+                coverageChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Covered Secretariats', 'Uncovered Secretariats'],
+                        datasets: [{
+                            data: [coveredSecretariats, uncovered],
+                            backgroundColor: [
+                                'rgba(0, 255, 163, 0.7)',
+                                'rgba(255, 99, 132, 0.7)'
+                            ],
+                            borderColor: [
+                                'rgba(0, 255, 163, 1)',
+                                'rgba(255, 99, 132, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    color: '#FFFFFF',
+                                    font: {
+                                        family: 'Exo 2'
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                bodyFont: {
+                                    family: 'Exo 2'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Update data table
+            function updateDataTable() {
+                const tableBody = document.getElementById('data-table-body');
+                tableBody.innerHTML = '';
+                
+                filteredData.forEach(item => {
+                    const row = document.createElement('tr');
+                    
+                    row.innerHTML = `
+                        <td>${item.MandalName}</td>
+                        <td>${parseInt(item.TotalFamilies || 0).toLocaleString()}</td>
+                        <td>${parseInt(item.TotalFamilyMembers || 0).toLocaleString()}</td>
+                        <td>${parseInt(item.TotalAdopted || 0).toLocaleString()}</td>
+                        <td>${parseInt(item.TotalMargadarsiMobilized || 0).toLocaleString()}</td>
+                        <td>${parseInt(item.TotalSecretariats || item.TotalSecretariats || 0).toLocaleString()}</td>
+                        <td>${parseInt(item.CoveredSecretariats || 0).toLocaleString()}</td>
+                    `;
+                    
+                    tableBody.appendChild(row);
+                });
+            }
+            
+            // Initialize map
+            let map;
+            function updateMap() {
+                // In a real app, you would use actual coordinates for each mandal
+                // For this demo, we'll just show a generic map of India
+                
+                if (map) {
+                    map.remove();
+                }
+                
+                map = L.map('map').setView([16.5, 81.0], 8); // Approximate coordinates for Andhra Pradesh
+                
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                    maxZoom: 18,
+                }).addTo(map);
+                
+                // Add markers for each mandal (in a real app, you would have actual coordinates)
+                filteredData.forEach(item => {
+                    // Generate random coordinates near Andhra Pradesh for demo purposes
+                    const lat = 16.5 + (Math.random() * 2 - 1);
+                    const lng = 81.0 + (Math.random() * 2 - 1);
+                    
+                    const adoptedPercentage = (parseInt(item.TotalAdopted || 0) / parseInt(item.TotalFamilies || 1) * 100).toFixed(1);
+                    
+                    L.circleMarker([lat, lng], {
+                        radius: 5 + (parseInt(item.TotalFamilies || 0) / 500),
+                        fillColor: getColorForAdoption(adoptedPercentage),
+                        color: '#fff',
+                        weight: 1,
+                        opacity: 1,
+                        fillOpacity: 0.8
+                    }).bindPopup(`
+                        <b>${item.MandalName}</b><br>
+                        Families: ${parseInt(item.TotalFamilies || 0).toLocaleString()}<br>
+                        Adopted: ${parseInt(item.TotalAdopted || 0).toLocaleString()} (${adoptedPercentage}%)
+                    `).addTo(map);
+                });
+            }
+            
+            function getColorForAdoption(percentage) {
+                // Convert percentage to color gradient from red to green
+                const pct = parseFloat(percentage);
+                const r = pct < 50 ? 255 : Math.floor(255 - (pct * 2 - 100) * 255 / 100);
+                const g = pct > 50 ? 255 : Math.floor((pct * 2) * 255 / 100);
+                return `rgb(${r}, ${g}, 0)`;
+            }
+            
+            // Event listeners for filters
+            document.getElementById('constituency-filter').addEventListener('change', filterData);
+            document.getElementById('mandal-filter').addEventListener('change', filterData);
+            document.getElementById('data-type-filter').addEventListener('change', filterData);
+            
+            // Initialize with sample data (in a real app, you would call fetchData())
+            loadSampleData();
+            
+            // Add scroll animations
+            const fadeElements = document.querySelectorAll('.fade-in');
+            
+            const fadeObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = 1;
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, { threshold: 0.1 });
+            
+            fadeElements.forEach(el => {
+                el.style.opacity = 0;
+                el.style.transform = 'translateY(20px)';
+                el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                fadeObserver.observe(el);
+            });
         });
-      })
-      .catch(e => {
-        document.getElementById('output').innerHTML += 
-          `<p style="color:red">Error: ${e.message}</p>`;
-        console.error(e);
-      });
-  </script>
+    </script>
 </body>
 </html>
